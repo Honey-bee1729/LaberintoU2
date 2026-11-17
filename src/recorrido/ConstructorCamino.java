@@ -1,126 +1,60 @@
 package recorrido;
-
-import java.util.Random;
 import java.util.Stack;
 import modelo.Laberinto;
 import modelo.Posicion;
+import portales.GestorPortales;
 
 public class ConstructorCamino {
-
-    public Stack<Posicion> construir(
-            Laberinto laberinto, long semilla) {
-
-        Stack<Posicion> camino = new Stack<>();
-
-        Random azar = new Random(
-            semilla ^ 0x1E3A2B7CL
-        );
-
-        agregar(laberinto, camino, 0, 0);
-
-        int diagonalFinal = Math.min(
-            laberinto.getFilas(),
-            laberinto.getColumnas()
-        ) - 1;
-
-        avanzarDiagonal(
-            laberinto, camino, azar,
-            0, 0, diagonalFinal
-        );
-
-        laberinto.colocar(0, 0, 'S');
-
-        laberinto.colocar(
-            laberinto.getFilas() - 1,
-            laberinto.getColumnas() - 1,
-            'F'
-        );
-
+    public Stack<Posicion> construir(Laberinto l,long semilla) {
+        //pila para guardar el recorrido.
+        Stack<Posicion> camino=new Stack<>();
+        // calcula la cantidad  de movimientos 
+        int mejor=resolver(l,camino,0,0,l.getFilas()*l.getColumnas(),false);
+        /// uso de la misma
+        if(mejor<l.getFilas()*l.getColumnas()) resolver(l,camino,0,0,mejor+1,true);
         return camino;
     }
+    
+    // se recorrena las opciones de forma recursiva y se descartan las que no mejoran la longitud y se conserva la longitud minima 
+    
+    private int resolver(Laberinto l,Stack<Posicion> pila,int f,int c,int mejor,boolean conservar) {
+    
+        // si hay una pared se detiene, sale de la matriz y se repite la casilla
+        if(!l.transitable(f,c) || (l.obtener(f,c)&0x8000)!=0 || pila.size()>=mejor) return mejor;
+        
+        // se guarda el valor original para restaurarlo cuando termine la llamada
+        char original=l.obtener(f,c);
+        // La cantidad de posiciones anteriores equivale a los movimientos 
+        int longitud=pila.size();
+        // agrega  la pocicion actual de la pila
+        pila.push(new Posicion(f,c));
+        //se marca la visita con el bit alto del carácter para no crear otra matriz.
+        l.colocar(f,c,(char)(original|0x8000));
+        int resultado=mejor;
+        
+        // si esta en el final, registra la longitud de recorrido
+        if(original=='F') {
+            resultado=longitud;
+        } else {
 
-    private void avanzarDiagonal(
-            Laberinto l,
-            Stack<Posicion> camino,
-            Random azar,
-            int fila,
-            int columna,
-            int limite) {
-
-        if (fila == l.getFilas() - 1 &&
-            columna == l.getColumnas() - 1) {
-            return;
-        }
-
-        if (fila == columna && fila < limite) {
-
-            if (l.obtener(fila, columna) == 'P') {
-
-                agregar(
-                    l, camino,
-                    fila + 1, columna + 1
-                );
-
+            // si se encuentra de un portal, se calcula el destino antes de continuar 
+            Posicion destino=l.esPortal(original)?GestorPortales.destino(f,c,original):null;
+            
+            // si el destino esta dentro del laberinto y no es una pared ocurre el salto 
+            if(destino!=null && l.transitable(destino.getFila(),destino.getColumna())) {
+                resultado=resolver(l,pila,destino.getFila(),destino.getColumna(),resultado,conservar);
             } else {
-
-                if (azar.nextBoolean()) {
-                    agregar(
-                        l, camino,
-                        fila, columna + 1
-                    );
-                } else {
-                    agregar(
-                        l, camino,
-                        fila + 1, columna
-                    );
-                }
-
-                agregar(
-                    l, camino,
-                    fila + 1, columna + 1
-                );
+                // Si no hay un portal válido, intento abajo, derecha, arriba e izquierda.
+                resultado=resolver(l,pila,f+1,c,resultado,conservar);
+                // se retira la posición al retroceder.
+        if(!conservar || resultado==mejor) resultado=resolver(l,pila,f,c+1,resultado,conservar);
+                if(!conservar || resultado==mejor) resultado=resolver(l,pila,f-1,c,resultado,conservar);
+                if(!conservar || resultado==mejor) resultado=resolver(l,pila,f,c-1,resultado,conservar);
             }
-
-            avanzarDiagonal(
-                l, camino, azar,
-                fila + 1, columna + 1,
-                limite
-            );
-
-            return;
         }
-
-        boolean bajar =
-            fila < l.getFilas() - 1 &&
-            (columna == l.getColumnas() - 1 ||
-             azar.nextBoolean());
-
-        int nuevaFila = bajar ? fila + 1 : fila;
-
-        int nuevaColumna = bajar
-            ? columna : columna + 1;
-
-        agregar(
-            l, camino,
-            nuevaFila, nuevaColumna
-        );
-
-        avanzarDiagonal(
-            l, camino, azar,
-            nuevaFila, nuevaColumna, limite
-        );
-    }
-
-    private void agregar(
-            Laberinto l,
-            Stack<Posicion> camino,
-            int fila,
-            int columna) {
-
-        if (l.obtener(fila, columna) != 'P') {
-            l.colocar(fila, columna, '.');
-        }
-
-        camino.push(new Posicion(fila, columna));
+        
+        l.colocar(f,c,original);
+        if(!conservar || resultado==mejor) pila.pop();
+        return resultado;
     }
 }
