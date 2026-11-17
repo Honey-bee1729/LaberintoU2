@@ -12,6 +12,7 @@ public class Portal {
             int desplazamientoFila,
             int desplazamientoColumna) {
 
+        // Guardo posición del portal y cuánto se mueve en cada dirección.
         this.origen = origen;
         this.desplazamientoFila = desplazamientoFila;
         this.desplazamientoColumna = desplazamientoColumna;
@@ -22,6 +23,7 @@ public class Portal {
     }
 
     public Posicion destino() {
+        // Sumo los desplazamientos al origen para obtener el destino (px+x, py+y).
         return new Posicion(
             origen.getFila() + desplazamientoFila,
             origen.getColumna() + desplazamientoColumna
