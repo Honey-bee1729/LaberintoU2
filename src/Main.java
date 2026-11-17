@@ -28,21 +28,21 @@ public class Main {
             System.out.print("Semilla (numero entero): ");
             long semilla = entrada.nextLong();
 
-            // se crea la matriz con las dimensiones que ingresé
+            // se crea la matriz con las dimensiones que ingresamos
             Laberinto laberinto =
                 new Laberinto(filas, columnas);
 
-            // primero se generan las paredes y los pasillos usando la semilla.
+            // primero se generan las paredes y los pasillos usando la semilla
             new GeneradorLaberinto().generar(
                 laberinto, semilla
             );
 
-            // se colocan los tres portales en los espacios libres.
+            // se colocan los tres portales en los espacios libres
             new GestorPortales().colocarTres(
                 laberinto, semilla
             );
 
-            // se guarda en una pila el camino que encuentra la función recursiva.
+            // se guarda en una pila el camino que encuentra la función recursiva
             Stack<Posicion> camino =
                 new ConstructorCamino().construir(
                     laberinto, semilla
