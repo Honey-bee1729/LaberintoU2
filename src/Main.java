@@ -12,6 +12,7 @@ public class Main {
 
     public static void main(String[] args) {
 
+        // Se utiliza scanner para recibir los datos desde la terminal
         try (Scanner entrada = new Scanner(System.in)) {
 
             System.out.println(
@@ -27,17 +28,21 @@ public class Main {
             System.out.print("Semilla (numero entero): ");
             long semilla = entrada.nextLong();
 
+            // se crea la matriz con las dimensiones que ingresé
             Laberinto laberinto =
                 new Laberinto(filas, columnas);
 
+            // primero se generan las paredes y los pasillos usando la semilla.
             new GeneradorLaberinto().generar(
                 laberinto, semilla
             );
 
+            // se colocan los tres portales en los espacios libres.
             new GestorPortales().colocarTres(
                 laberinto, semilla
             );
 
+            // se guarda en una pila el camino que encuentra la función recursiva.
             Stack<Posicion> camino =
                 new ConstructorCamino().construir(
                     laberinto, semilla
@@ -46,14 +51,14 @@ public class Main {
             Visualizador vista = new Visualizador();
 
             vista.mostrar(laberinto);
-            vista.mostrarCamino(camino);
+            // si la pila queda vacía, podemos decir que no se encontro una salida
+            if (camino.empty()) {
+                System.out.println("El laberinto no tiene solucion.");
+            } else {
+                vista.mostrarCamino(camino);
+            }
 
-            System.out.println(
-                "Minimo garantizado: " +
-                (filas + columnas - 2 - 3) +
-                " movimientos."
-            );
-
+        // se controlan las dimensiones incorrectas para que no se cierre con un error
         } catch (IllegalArgumentException ex) {
 
             System.err.println(
